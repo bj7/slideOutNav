@@ -29,8 +29,24 @@
 import UIKit
 
 class ContainerViewController: UIViewController {
+  enum SlideOutState {
+    case bothCollapsed
+    case leftPanelExpanded
+    case rightPanelExpanded
+  }
+  
   var centerNavigationController: UINavigationController!
   var centerViewController: CenterViewController!
+  
+  var currentState: SlideOutState = .bothCollapsed {
+    didSet {
+      let shouldShowShadow = currentState != .bothCollapsed
+      showShadowForCenterViewController(shouldShowShadow)
+    }
+  }
+  var leftViewController: SidePanelViewController?
+  
+  let centerPanelExpandedOffset: CGFloat = 90
   
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -68,11 +84,71 @@ private extension UIStoryboard {
 
 extension ContainerViewController: CenterViewControllerDelegate {
   func toggleLeftPanel() {
+    let notAlreadyExpanded = (currentState != .leftPanelExpanded)
+    if notAlreadyExpanded {
+      addLeftPanelViewController()
+    }
+    animateLeftPanel(shouldExpand: notAlreadyExpanded)
+  }
+  
+  func addLeftPanelViewController() {
+    guard leftViewController == nil else { return }
+    if let vc = UIStoryboard.leftViewController() {
+      vc.animals = Animal.allCats()
+      addChildSidePanelController(vc)
+      leftViewController = vc
+    }
+  }
+  
+  func animateLeftPanel(shouldExpand: Bool) {
+    if shouldExpand {
+      currentState = .leftPanelExpanded
+      animateCenterPanelXPosition(
+        targetPosition: centerNavigationController.view.frame.width
+        - centerPanelExpandedOffset
+      )
+    } else {
+      animateCenterPanelXPosition(targetPosition: 0) { _ in
+        self.currentState = .bothCollapsed
+        self.leftViewController?.view.removeFromSuperview()
+        self.leftViewController = nil
+      }
+    }
   }
   
   func toggleRightPanel() {
   }
   
   func collapseSidePanels() {
+  }
+  
+  func animateCenterPanelXPosition(
+    targetPosition: CGFloat,
+    completion: ((Bool) -> Void)? = nil) {
+    UIView.animate(
+      withDuration: 0.5,
+      delay: 0,
+      usingSpringWithDamping: 0.8,
+      initialSpringVelocity: 0,
+      options: .curveEaseOut,
+      animations: {
+        self.centerNavigationController.view.frame.origin.x = targetPosition
+      },
+      completion: completion
+    )
+  }
+  
+  func addChildSidePanelController(_ sidePanelController: SidePanelViewController) {
+    view.insertSubview(sidePanelController.view, at: 0)
+    addChild(sidePanelController)
+    sidePanelController.didMove(toParent: self)
+  }
+  
+  func showShadowForCenterViewController(_ shouldShowShadow: Bool) {
+    if shouldShowShadow {
+      centerNavigationController.view.layer.shadowOpacity = 0.8
+    } else {
+      centerNavigationController.view.layer.shadowOpacity = 0.0
+    }
   }
 }
