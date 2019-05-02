@@ -30,6 +30,7 @@ import UIKit
 
 class SidePanelViewController: UIViewController {
   @IBOutlet weak var tableView: UITableView!
+  var delegate: SidePanelViewControllerDelegate?
   
   var animals: [Animal]!
   
