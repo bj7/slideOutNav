@@ -62,6 +62,8 @@ extension SidePanelViewController: UITableViewDataSource {
 
 extension SidePanelViewController: UITableViewDelegate {
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    let animal = animals[indexPath.row]
+    delegate?.didSelectAnimal(animal)
   }
 }
 
